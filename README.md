@@ -75,7 +75,7 @@ The key is the main secret value used to encrypt and decrypt data. Threefish sup
 - If the key is weak or predictable, the encryption can be compromised.
 - Secure key generation should use a cryptographic random number generator (e.g., crypto/rand in Golang).
 
-## Tweak
+### Tweak
 The tweak is an additional input that modifies how encryption is applied to data, similar to a nonce or initialization vector (IV) in other encryption schemes. It prevents the same plaintext from always producing the same ciphertext, adding an extra layer of security.
 - Threefish uses a 128-bit tweak (16 bytes), divided into two 64-bit words.
 - The tweak should remain the same between encryption and decryption.
