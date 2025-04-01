@@ -19,7 +19,7 @@ type Threefish struct {
 	usePadding bool
 }
 
-func NewThreefish(size int, key []byte, tweak []byte, usePadding bool) (*Threefish, error) {
+func NewThreefish(size int, key []byte, tweak []byte) (*Threefish, error) {
 	if size != Threefish256 && size != Threefish512 && size != Threefish1024 {
 		return nil, errors.New("invalid Threefish block size")
 	}
@@ -50,37 +50,13 @@ func NewThreefish(size int, key []byte, tweak []byte, usePadding bool) (*Threefi
 	}
 
 	return &Threefish{
-		blockSize:  size,
-		key:        k,
-		tweak:      t,
-		usePadding: usePadding,
+		blockSize: size,
+		key:       k,
+		tweak:     t,
 	}, nil
 }
 
-func (tf *Threefish) padToBlockSize(input []byte) []byte {
-	padSize := tf.blockSize/8 - len(input)%tf.blockSize/8
-	if padSize == 0 {
-		return input
-	}
-	// Padding dengan byte 0x00
-	padding := make([]byte, padSize)
-	return append(input, padding...)
-}
-
-func (tf *Threefish) unpad(input []byte) []byte {
-	// Cek apakah karakter terakhir adalah padding 0x00
-	lastNonZeroIdx := len(input)
-	for i := len(input) - 1; i >= 0; i-- {
-		if input[i] != 0 {
-			lastNonZeroIdx = i + 1
-			break
-		}
-	}
-	return input[:lastNonZeroIdx]
-}
-
 func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
-	input = tf.padToBlockSize(input) // Pastikan input sudah terpad dengan benar
 	if len(input) != tf.blockSize/8 {
 		return nil, errors.New("invalid input length")
 	}
@@ -115,9 +91,6 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 	for i := 0; i < blockWords; i++ {
 		binary.LittleEndian.PutUint64(output[i*8:], plaintext[i])
 	}
-
-	// Hapus padding setelah dekripsi
-	output = tf.unpad(output)
 	return output, nil
 }
 
