@@ -22,6 +22,10 @@ A pure Golang implementation of the **Threefish** block cipher, supporting **256
 ```go
 go get -u github.com/wprimadi/threefish@v1.0.0
 ```
+or 
+```go
+go get -u github.com/wprimadi/threefish@latest
+```
 
 ## Usage
 ### Import the package
