@@ -13,12 +13,13 @@ const (
 )
 
 type Threefish struct {
-	blockSize int
-	key       []uint64
-	tweak     [3]uint64
+	blockSize  int
+	key        []uint64
+	tweak      [3]uint64
+	usePadding bool
 }
 
-func NewThreefish(size int, key []byte, tweak []byte) (*Threefish, error) {
+func NewThreefish(size int, key []byte, tweak []byte, usePadding bool) (*Threefish, error) {
 	if size != Threefish256 && size != Threefish512 && size != Threefish1024 {
 		return nil, errors.New("invalid Threefish block size")
 	}
@@ -49,15 +50,45 @@ func NewThreefish(size int, key []byte, tweak []byte) (*Threefish, error) {
 	}
 
 	return &Threefish{
-		blockSize: size,
-		key:       k,
-		tweak:     t,
+		blockSize:  size,
+		key:        k,
+		tweak:      t,
+		usePadding: usePadding,
 	}, nil
 }
 
+func (tf *Threefish) padToBlockSize(input []byte) []byte {
+	padLength := tf.blockSize/8 - len(input)%tf.blockSize/8
+	if padLength == 0 {
+		return input
+	}
+	paddedInput := append(input, make([]byte, padLength)...)
+	paddedInput[len(input)] = byte(padLength) // Store the padding length
+	return paddedInput
+}
+
+func (tf *Threefish) unpad(input []byte) ([]byte, error) {
+	if len(input) == 0 {
+		return nil, errors.New("input is empty")
+	}
+
+	// Get padding length from last byte
+	padLength := int(input[len(input)-1])
+	if padLength > len(input) {
+		return nil, errors.New("invalid padding length")
+	}
+
+	return input[:len(input)-padLength], nil
+}
+
 func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
-	if len(input) != tf.blockSize/8 {
+	if len(input) != tf.blockSize/8 && !tf.usePadding {
 		return nil, errors.New("invalid input length")
+	}
+
+	if tf.usePadding {
+		// Pad input to block size if necessary
+		input = tf.padToBlockSize(input)
 	}
 
 	blockWords := tf.blockSize / 64
@@ -75,7 +106,7 @@ func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
 }
 
 func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
-	if len(input) != tf.blockSize/8 {
+	if len(input) != tf.blockSize/8 && !tf.usePadding {
 		return nil, errors.New("invalid input length")
 	}
 
@@ -90,6 +121,16 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 	for i := 0; i < blockWords; i++ {
 		binary.LittleEndian.PutUint64(output[i*8:], plaintext[i])
 	}
+
+	if tf.usePadding {
+		// Remove padding if used
+		plaintext, err := tf.unpad(output)
+		if err != nil {
+			return nil, err
+		}
+		return plaintext, nil
+	}
+
 	return output, nil
 }
 

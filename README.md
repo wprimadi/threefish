@@ -42,12 +42,12 @@ import (
 
 func main() {
 	// Define a 512-bit key (64 bytes) and 16-byte tweak
-	key := make([]byte, 64)  // Replace with secure key
-	tweak := make([]byte, 16) // Replace with secure tweak
+	key := []byte("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	tweak := []byte("abcdefghijklmnop")
 	plaintext := []byte("This is a secret message!")
 
 	// Initialize Threefish-512
-	cipher, err := threefish.NewThreefish(threefish.Threefish512, key, tweak)
+	cipher, err := threefish.NewThreefish(Threefish1024, key, tweak, true)
 	if err != nil {
 		log.Fatal(err)
 	}
