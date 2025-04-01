@@ -94,17 +94,23 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 }
 
 func (tf *Threefish) encrypt(block []uint64) []uint64 {
-	for i := range block {
-		block[i] ^= tf.key[i%len(tf.key)]
-		block[i] = bits.RotateLeft64(block[i], int(tf.tweak[0]%64))
+	numRounds := 72 // Standard for Threefish
+	for round := 0; round < numRounds; round += 4 {
+		for i := 0; i < len(block); i++ {
+			block[i] ^= tf.key[i%len(tf.key)]
+			block[i] = bits.RotateLeft64(block[i], int(tf.tweak[round%3]%64))
+		}
 	}
 	return block
 }
 
 func (tf *Threefish) decrypt(block []uint64) []uint64 {
-	for i := range block {
-		block[i] = bits.RotateLeft64(block[i], -int(tf.tweak[0]%64))
-		block[i] ^= tf.key[i%len(tf.key)]
+	numRounds := 72 // Standard for Threefish
+	for round := numRounds - 4; round >= 0; round -= 4 {
+		for i := 0; i < len(block); i++ {
+			block[i] = bits.RotateLeft64(block[i], -int(tf.tweak[round%3]%64))
+			block[i] ^= tf.key[i%len(tf.key)]
+		}
 	}
 	return block
 }
