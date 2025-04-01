@@ -20,7 +20,7 @@ A pure Golang implementation of the **Threefish** block cipher, supporting **256
 
 ## Installation
 ```go
-go get -u github.com/wprimadi/threefish@v1.0.0
+go get -u github.com/wprimadi/threefish@v1.0.1
 ```
 or 
 ```go
