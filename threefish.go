@@ -80,10 +80,7 @@ func (tf *Threefish) unpad(input []byte) []byte {
 }
 
 func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
-	if tf.usePadding {
-		input = tf.padToBlockSize(input)
-	}
-
+	input = tf.padToBlockSize(input) // Pastikan input sudah terpad dengan benar
 	if len(input) != tf.blockSize/8 {
 		return nil, errors.New("invalid input length")
 	}
@@ -99,7 +96,6 @@ func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
 	for i := 0; i < blockWords; i++ {
 		binary.LittleEndian.PutUint64(output[i*8:], ciphertext[i])
 	}
-
 	return output, nil
 }
 
@@ -120,10 +116,8 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 		binary.LittleEndian.PutUint64(output[i*8:], plaintext[i])
 	}
 
-	if tf.usePadding {
-		output = tf.unpad(output)
-	}
-
+	// Hapus padding setelah dekripsi
+	output = tf.unpad(output)
 	return output, nil
 }
 
