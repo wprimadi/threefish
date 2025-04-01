@@ -57,38 +57,30 @@ func NewThreefish(size int, key []byte, tweak []byte, usePadding bool) (*Threefi
 	}, nil
 }
 
+// padToBlockSize adds padding to the plaintext to make its length a multiple of blockSize.
 func (tf *Threefish) padToBlockSize(input []byte) []byte {
-	padLength := tf.blockSize/8 - len(input)%tf.blockSize/8
-	if padLength == 0 {
+	paddingLength := tf.blockSize/8 - len(input)%tf.blockSize/8
+	if paddingLength == 0 {
 		return input
 	}
-	paddedInput := append(input, make([]byte, padLength)...)
-	paddedInput[len(input)] = byte(padLength) // Store the padding length
-	return paddedInput
+
+	padding := make([]byte, paddingLength)
+	return append(input, padding...)
 }
 
-func (tf *Threefish) unpad(input []byte) ([]byte, error) {
-	if len(input) == 0 {
-		return nil, errors.New("input is empty")
-	}
-
-	// Get padding length from last byte
-	padLength := int(input[len(input)-1])
-	if padLength > len(input) {
-		return nil, errors.New("invalid padding length")
-	}
-
-	return input[:len(input)-padLength], nil
+// unpad removes padding from the decrypted message.
+func (tf *Threefish) unpad(input []byte) []byte {
+	return input[:len(input)-len(input)%tf.blockSize/8]
 }
 
 func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
-	if len(input) != tf.blockSize/8 && !tf.usePadding {
-		return nil, errors.New("invalid input length")
+	// Pad the input if padding is enabled
+	if tf.usePadding {
+		input = tf.padToBlockSize(input)
 	}
 
-	if tf.usePadding {
-		// Pad input to block size if necessary
-		input = tf.padToBlockSize(input)
+	if len(input) != tf.blockSize/8 {
+		return nil, errors.New("invalid input length")
 	}
 
 	blockWords := tf.blockSize / 64
@@ -106,7 +98,7 @@ func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
 }
 
 func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
-	if len(input) != tf.blockSize/8 && !tf.usePadding {
+	if len(input) != tf.blockSize/8 {
 		return nil, errors.New("invalid input length")
 	}
 
@@ -122,15 +114,10 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 		binary.LittleEndian.PutUint64(output[i*8:], plaintext[i])
 	}
 
+	// Unpad the output if padding is enabled
 	if tf.usePadding {
-		// Remove padding if used
-		plaintext, err := tf.unpad(output)
-		if err != nil {
-			return nil, err
-		}
-		return plaintext, nil
+		output = tf.unpad(output)
 	}
-
 	return output, nil
 }
 
