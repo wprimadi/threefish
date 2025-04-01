@@ -57,29 +57,24 @@ func NewThreefish(size int, key []byte, tweak []byte, usePadding bool) (*Threefi
 	}, nil
 }
 
-// padToBlockSize adds padding to the input data to make its length a multiple of the block size.
-func (tf *Threefish) padToBlockSize(data []byte) []byte {
-	paddingLength := tf.blockSize/8 - len(data)%tf.blockSize/8
-	if paddingLength == tf.blockSize/8 {
-		return data
+func (tf *Threefish) padToBlockSize(input []byte) []byte {
+	padSize := tf.blockSize/8 - len(input)%tf.blockSize/8
+	if padSize == 0 {
+		return input
 	}
-	padding := make([]byte, paddingLength)
-	return append(data, padding...)
+	padding := make([]byte, padSize) // Padding dengan 0x00
+	return append(input, padding...)
 }
 
-// unpad removes padding from the data.
-func (tf *Threefish) unpad(data []byte) []byte {
-	if len(data) == 0 {
-		return data
-	}
-
-	// Trim padding (0x00)
-	for i := len(data) - 1; i >= 0; i-- {
-		if data[i] != 0x00 {
-			return data[:i+1]
+func (tf *Threefish) unpad(input []byte) []byte {
+	var lastNonZeroIdx int
+	for i := len(input) - 1; i >= 0; i-- {
+		if input[i] != 0 {
+			lastNonZeroIdx = i + 1
+			break
 		}
 	}
-	return data
+	return input[:lastNonZeroIdx]
 }
 
 func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
