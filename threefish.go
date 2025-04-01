@@ -62,12 +62,14 @@ func (tf *Threefish) padToBlockSize(input []byte) []byte {
 	if padSize == 0 {
 		return input
 	}
-	padding := make([]byte, padSize) // Padding dengan 0x00
+	// Padding dengan byte 0x00
+	padding := make([]byte, padSize)
 	return append(input, padding...)
 }
 
 func (tf *Threefish) unpad(input []byte) []byte {
-	var lastNonZeroIdx int
+	// Cek apakah karakter terakhir adalah padding 0x00
+	lastNonZeroIdx := len(input)
 	for i := len(input) - 1; i >= 0; i-- {
 		if input[i] != 0 {
 			lastNonZeroIdx = i + 1
