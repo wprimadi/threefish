@@ -20,7 +20,7 @@ A pure Golang implementation of the **Threefish** block cipher, supporting **256
 
 ## Installation
 ```go
-go get github.com/wprimadi/threefish
+go get -u github.com/wprimadi/threefish@v1.0.0
 ```
 
 ## Usage
@@ -44,10 +44,10 @@ func main() {
 	// Define a 512-bit key (64 bytes) and 16-byte tweak
 	key := []byte("1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
 	tweak := []byte("abcdefghijklmnop")
-	plaintext := []byte("This is a secret message!")
+	plaintext := []byte("Lorem ipsum dolor sit amet, consectetur adipiscing elit. 1234567")
 
 	// Initialize Threefish-512
-	cipher, err := threefish.NewThreefish(Threefish1024, key, tweak, true)
+	cipher, err := threefish.NewThreefish(Threefish1024, key, tweak)
 	if err != nil {
 		log.Fatal(err)
 	}
