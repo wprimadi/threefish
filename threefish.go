@@ -32,7 +32,7 @@ func NewThreefish(size int, key []byte, tweak []byte) (*Threefish, error) {
 	for i := 0; i < keyWords; i++ {
 		k[i] = binary.LittleEndian.Uint64(key[i*8 : (i+1)*8])
 	}
-	// Compute Parity Word
+
 	var parity uint64
 	for _, word := range k[:keyWords] {
 		parity ^= word
@@ -94,7 +94,6 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 }
 
 func (tf *Threefish) encrypt(block []uint64) []uint64 {
-	// Implement full encryption rounds
 	for i := range block {
 		block[i] ^= tf.key[i%len(tf.key)]
 		block[i] = bits.RotateLeft64(block[i], int(tf.tweak[0]%64))
@@ -103,7 +102,6 @@ func (tf *Threefish) encrypt(block []uint64) []uint64 {
 }
 
 func (tf *Threefish) decrypt(block []uint64) []uint64 {
-	// Implement full decryption rounds
 	for i := range block {
 		block[i] = bits.RotateLeft64(block[i], -int(tf.tweak[0]%64))
 		block[i] ^= tf.key[i%len(tf.key)]
