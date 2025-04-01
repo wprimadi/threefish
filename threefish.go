@@ -57,24 +57,32 @@ func NewThreefish(size int, key []byte, tweak []byte, usePadding bool) (*Threefi
 	}, nil
 }
 
-// padToBlockSize adds padding to the plaintext to make its length a multiple of blockSize.
-func (tf *Threefish) padToBlockSize(input []byte) []byte {
-	paddingLength := tf.blockSize/8 - len(input)%tf.blockSize/8
-	if paddingLength == 0 {
-		return input
+// padToBlockSize adds padding to the input data to make its length a multiple of the block size.
+func (tf *Threefish) padToBlockSize(data []byte) []byte {
+	paddingLength := tf.blockSize/8 - len(data)%tf.blockSize/8
+	if paddingLength == tf.blockSize/8 {
+		return data
 	}
-
 	padding := make([]byte, paddingLength)
-	return append(input, padding...)
+	return append(data, padding...)
 }
 
-// unpad removes padding from the decrypted message.
-func (tf *Threefish) unpad(input []byte) []byte {
-	return input[:len(input)-len(input)%tf.blockSize/8]
+// unpad removes padding from the data.
+func (tf *Threefish) unpad(data []byte) []byte {
+	if len(data) == 0 {
+		return data
+	}
+
+	// Trim padding (0x00)
+	for i := len(data) - 1; i >= 0; i-- {
+		if data[i] != 0x00 {
+			return data[:i+1]
+		}
+	}
+	return data
 }
 
 func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
-	// Pad the input if padding is enabled
 	if tf.usePadding {
 		input = tf.padToBlockSize(input)
 	}
@@ -94,6 +102,7 @@ func (tf *Threefish) EncryptBlock(input []byte) ([]byte, error) {
 	for i := 0; i < blockWords; i++ {
 		binary.LittleEndian.PutUint64(output[i*8:], ciphertext[i])
 	}
+
 	return output, nil
 }
 
@@ -114,10 +123,10 @@ func (tf *Threefish) DecryptBlock(input []byte) ([]byte, error) {
 		binary.LittleEndian.PutUint64(output[i*8:], plaintext[i])
 	}
 
-	// Unpad the output if padding is enabled
 	if tf.usePadding {
 		output = tf.unpad(output)
 	}
+
 	return output, nil
 }
 
